@@ -2,10 +2,22 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>🌸 몰입가든</title>
+
+<!-- PWA 설정 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6b8e4e">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+
+<!-- iOS PWA 지원 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="몰입가든">
+
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 50%, #ffd3b6 100%);
@@ -14,6 +26,8 @@
     justify-content: center;
     align-items: center;
     padding: 20px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .app {
     background: rgba(255,255,255,0.85);
@@ -82,12 +96,6 @@
   }
   .stat { font-size: 14px; color: #6b8e4e; margin-top: 8px; }
 
-  .notify-notice {
-    font-size: 11px;
-    color: #999;
-    margin-top: 12px;
-    line-height: 1.4;
-  }
   .perm-warning {
     background: #fff3cd;
     color: #856404;
@@ -96,17 +104,55 @@
     font-size: 12px;
     margin-bottom: 12px;
     display: none;
+    line-height: 1.5;
+  }
+  .perm-warning button {
+    margin-top: 8px;
+    padding: 8px 14px;
+    background: #856404;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    flex: none;
+  }
+
+  .install-banner {
+    display: none;
+    background: #2d5016;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .install-banner button {
+    background: #ffd3b6;
+    color: #2d5016;
+    margin-top: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: none;
   }
 </style>
 </head>
 <body>
 <div class="app">
+  <div class="install-banner" id="installBanner">
+    📲 몰입가든을 홈 화면에 설치하고<br>앱처럼 사용해보세요!
+    <br><button onclick="installApp()">설치하기</button>
+  </div>
+
   <h1>🌸 몰입가든</h1>
   <p class="subtitle">25분 집중이 꽃을 피웁니다</p>
 
   <div class="perm-warning" id="permWarning">
-    🔔 알림 권한이 꺼져 있어요. 아래 버튼을 눌러 허용해주세요.
-    <br><button onclick="requestNotif()" style="margin-top:8px; padding:8px; background:#856404; color:white; border:none; border-radius:6px; cursor:pointer; width:auto;">알림 허용하기</button>
+    🔔 알림 권한이 꺼져 있어요.
+    <br><button onclick="requestNotif()">알림 허용하기</button>
   </div>
 
   <div class="mode-badge mode-focus" id="modeBadge">🍅 집중 시간</div>
@@ -122,21 +168,19 @@
     <span style="color:#aaa; font-size:12px; align-self:center;">아직 핀 꽃이 없어요 🌱</span>
   </div>
   <div class="stat" id="stat">오늘 핀 꽃: 0송이</div>
-
-  <p class="notify-notice">
-    ※ 알림은 HTTPS 또는 localhost 환경에서만 작동합니다.<br>
-    파일을 직접 열었다면 로컬 서버로 실행해주세요.
-  </p>
 </div>
 
 <script>
-let FOCUS_TIME = 25 * 60;
-let BREAK_TIME = 5 * 60;
+const FOCUS_TIME = 25 * 60;
+const BREAK_TIME = 5 * 60;
+
 let timeLeft = FOCUS_TIME;
 let isFocus = true;
 let isRunning = false;
+let endTime = 0;
 let timerInterval = null;
 let flowerCount = 0;
+let deferredPrompt = null;
 
 const timerEl = document.getElementById('timer');
 const modeBadge = document.getElementById('modeBadge');
@@ -145,19 +189,26 @@ const pauseBtn = document.getElementById('pauseBtn');
 const gardenEl = document.getElementById('garden');
 const statEl = document.getElementById('stat');
 const permWarning = document.getElementById('permWarning');
+const installBanner = document.getElementById('installBanner');
 
-// ===== 알림 권한 처리 =====
+// ===== Service Worker 등록 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('✅ SW 등록:', reg.scope))
+      .catch(err => console.error('❌ SW 실패:', err));
+  });
+}
+
+// ===== 알림 권한 =====
 function checkNotifPermission() {
-  if (!('Notification' in window)) {
-    permWarning.style.display = 'block';
-    permWarning.textContent = '이 브라우저는 알림을 지원하지 않아요.';
-    return;
-  }
+  if (!('Notification' in window)) return;
   if (Notification.permission === 'default') {
     permWarning.style.display = 'block';
+    permWarning.innerHTML = '🔔 알림 권한이 꺼져 있어요.<br><button onclick="requestNotif()">알림 허용하기</button>';
   } else if (Notification.permission === 'denied') {
     permWarning.style.display = 'block';
-    permWarning.innerHTML = '🔕 알림이 차단되어 있어요. 브라우저 주소창 옆 자물쇠 아이콘에서 허용해주세요.';
+    permWarning.innerHTML = '🔕 알림이 차단되어 있어요.<br>브라우저 설정에서 알림을 허용해주세요.';
   } else {
     permWarning.style.display = 'none';
   }
@@ -168,32 +219,38 @@ async function requestNotif() {
   const permission = await Notification.requestPermission();
   checkNotifPermission();
   if (permission === 'granted') {
-    sendNotification('🌸 몰입가든', '알림이 활성화되었어요! 이제 꽃이 필 때 알려드릴게요.');
+    notify('🌸 몰입가든', '알림이 활성화되었어요! 꽃이 필 때 알려드릴게요.');
   }
 }
 
-function sendNotification(title, body) {
-  if (!('Notification' in window)) return;
+// Service Worker를 통한 알림 (백그라운드에서도 유지됨)
+async function notify(title, body) {
   if (Notification.permission !== 'granted') return;
 
-  const notif = new Notification(title, {
-    body: body,
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌸</text></svg>',
-    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌸</text></svg>',
-    tag: 'immersion-garden',
-    requireInteraction: false,
-  });
+  // SW가 준비되면 SW로 알림
+  if ('serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body: body,
+        icon: 'icon.svg',
+        badge: 'icon.svg',
+        tag: 'molip-garden',
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        data: { url: '/' }
+      });
+      return;
+    } catch (e) {
+      console.warn('SW 알림 실패, 기본 알림 사용:', e);
+    }
+  }
 
-  notif.onclick = () => {
-    window.focus();
-    notif.close();
-  };
-
-  // 5초 후 자동 닫기
-  setTimeout(() => notif.close(), 5000);
+  // 폴백: 기본 알림
+  new Notification(title, { body, icon: 'icon.svg' });
 }
 
-// ===== 타이머 로직 =====
+// ===== 타이머 로직 (절대 시간 기반) =====
 function updateDisplay() {
   const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   const s = (timeLeft % 60).toString().padStart(2, '0');
@@ -201,27 +258,32 @@ function updateDisplay() {
   document.title = `${m}:${s} 🌸 몰입가든`;
 }
 
+function tick() {
+  if (!isRunning) return;
+  const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+  timeLeft = remaining;
+  updateDisplay();
+  if (remaining <= 0) {
+    clearInterval(timerInterval);
+    isRunning = false;
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    sessionComplete();
+  }
+}
+
 function start() {
   if (isRunning) return;
-  // 시작할 때 알림 권한이 없으면 요청
   if (Notification.permission === 'default') requestNotif();
 
   isRunning = true;
+  endTime = Date.now() + timeLeft * 1000;
   startBtn.disabled = true;
   pauseBtn.disabled = false;
 
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateDisplay();
-
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      isRunning = false;
-      startBtn.disabled = false;
-      pauseBtn.disabled = true;
-      sessionComplete();
-    }
-  }, 1000);
+  clearInterval(timerInterval);
+  timerInterval = setInterval(tick, 250);
+  tick();
 }
 
 function pause() {
@@ -243,23 +305,20 @@ function reset() {
   modeBadge.className = 'mode-badge mode-focus';
 }
 
-function sessionComplete() {
+async function sessionComplete() {
   if (isFocus) {
-    // 집중 완료 → 꽃 피우기
     flowerCount++;
     addFlower();
-    sendNotification(
+    await notify(
       '🌷 꽃이 피었어요!',
-      `축하해요! ${flowerCount}번째 꽃이 피었습니다. 이제 5분 휴식할 시간이에요.`
+      `${flowerCount}번째 꽃이 피었습니다. 5분 휴식할 시간이에요.`
     );
-    // 휴식으로 전환
     isFocus = false;
     timeLeft = BREAK_TIME;
     modeBadge.textContent = '💧 휴식 시간';
     modeBadge.className = 'mode-badge mode-break';
   } else {
-    // 휴식 완료 → 집중으로
-    sendNotification(
+    await notify(
       '🌱 다시 집중할 시간!',
       '휴식이 끝났어요. 새로운 꽃을 피워볼까요?'
     );
@@ -280,9 +339,28 @@ function addFlower() {
   flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
   gardenEl.appendChild(flower);
   statEl.textContent = `오늘 핀 꽃: ${flowerCount}송이`;
+  localStorage.setItem('flowerCount', flowerCount);
 }
 
-// 초기화
+// ===== 설치 배너 =====
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBanner.style.display = 'block';
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      installBanner.style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+}
+
+// ===== 초기화 =====
 checkNotifPermission();
 updateDisplay();
 </script>
