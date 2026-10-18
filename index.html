@@ -3,24 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>🌸 몰입가든</title>
+<title>몰입가든</title>
 
-<!-- PWA 설정 -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#6b8e4e">
+<meta name="theme-color" content="#000000">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
-
-<!-- iOS PWA 지원 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="몰입가든">
 
+<!-- Pretendard -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<!-- Doto (도트 매트릭스 숫자용) -->
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
+  :root {
+    --black: #000000;
+    --surface: #111111;
+    --surface-raised: #1A1A1A;
+    --border: #222222;
+    --border-visible: #333333;
+    --text-primary: #E8E8E8;
+    --text-secondary: #999999;
+    --text-display: #FFFFFF;
+    --accent: #D71921;
+    --font-body: 'Pretendard', -apple-system, sans-serif;
+    --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+    --font-dot: 'Doto', 'Space Mono', monospace;
+  }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
   body {
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 50%, #ffd3b6 100%);
+    font-family: var(--font-body);
+    background-color: var(--black);
+    /* 도트 그리드 배경 (Nothing 시그니처) */
+    background-image: radial-gradient(var(--border) 1px, transparent 1px);
+    background-size: 16px 16px;
+    color: var(--text-primary);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -29,145 +50,199 @@
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .app {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(10px);
-    border-radius: 24px;
-    padding: 32px;
     width: 100%;
     max-width: 420px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    text-align: center;
+    background: var(--black);
+    border: 1px solid var(--border-visible);
+    border-radius: 0;
+    padding: 28px 24px;
+    position: relative;
   }
-  h1 { font-size: 28px; color: #2d5016; margin-bottom: 8px; }
-  .subtitle { font-size: 13px; color: #6b8e4e; margin-bottom: 24px; }
 
-  .timer-display {
-    font-size: 72px;
-    font-weight: 700;
-    color: #2d5016;
-    font-variant-numeric: tabular-nums;
-    margin: 16px 0;
-    letter-spacing: 2px;
+  /* 상단 라벨 (Nothing의 계기판 스타일) */
+  .top-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
   }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-display);
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+    margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+
   .mode-badge {
     display: inline-block;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--border-visible);
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    background: transparent;
   }
-  .mode-focus { background: #ffd3b6; color: #8b4513; }
-  .mode-break { background: #a8e6cf; color: #2d5016; }
+  .mode-badge.focus { border-left: 3px solid var(--accent); }
+  .mode-badge.break { border-left: 3px solid var(--text-secondary); }
 
-  .buttons { display: flex; gap: 10px; margin: 20px 0; }
+  .timer-display {
+    font-family: var(--font-dot);
+    font-size: 80px;
+    font-weight: 700;
+    color: var(--text-display);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 8px 0 24px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .buttons { display: flex; gap: 8px; margin-bottom: 28px; }
   button {
     flex: 1;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
+    padding: 16px 12px;
+    border: 1px solid var(--border-visible);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
+    transition: background 0.15s, border-color 0.15s;
   }
-  button:active { transform: scale(0.96); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn-start { background: #6b8e4e; color: white; }
-  .btn-pause { background: #ffd3b6; color: #8b4513; }
-  .btn-reset { background: #eee; color: #555; }
+  button:active { background: var(--surface-raised); }
+  button:disabled { color: #444; border-color: var(--border); cursor: not-allowed; }
+  .btn-start { border-color: var(--text-display); color: var(--text-display); }
+  .btn-start:active { background: var(--text-display); color: var(--black); }
+
+  /* 세그먼트 진행 바 (Nothing 스타일) */
+  .progress-segments {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+  }
+  .seg {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+  }
+  .seg.active { background: var(--text-display); border-color: var(--text-display); }
 
   .garden {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    min-height: 60px;
-    margin: 20px 0;
-    padding: 12px;
-    background: rgba(168,230,207,0.3);
-    border-radius: 16px;
-  }
-  .flower { font-size: 24px; animation: bloom 0.6s ease-out; }
-  @keyframes bloom {
-    0% { transform: scale(0) rotate(-45deg); }
-    100% { transform: scale(1) rotate(0); }
-  }
-  .stat { font-size: 14px; color: #6b8e4e; margin-top: 8px; }
-
-  .perm-warning {
-    background: #fff3cd;
-    color: #856404;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 12px;
+    gap: 8px;
+    min-height: 48px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
     margin-bottom: 12px;
-    display: none;
-    line-height: 1.5;
+    align-items: center;
+    justify-content: center;
   }
-  .perm-warning button {
-    margin-top: 8px;
-    padding: 8px 14px;
-    background: #856404;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    flex: none;
+  .flower {
+    font-size: 20px;
+    filter: grayscale(1);
+    animation: bloom 0.4s ease-out;
+  }
+  @keyframes bloom {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
   }
 
-  .install-banner {
-    display: none;
-    background: #2d5016;
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-size: 13px;
-    margin-bottom: 16px;
+  .stat {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
-  .install-banner button {
-    background: #ffd3b6;
-    color: #2d5016;
-    margin-top: 8px;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
+
+  .perm-warning, .install-banner {
+    display: none;
+    border: 1px solid var(--border-visible);
+    padding: 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+  .install-banner { border-left: 3px solid var(--accent); }
+  .perm-warning button, .install-banner button {
+    margin-top: 10px;
+    padding: 10px 14px;
     flex: none;
+    border-color: var(--text-display);
   }
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="install-banner" id="installBanner">
-    📲 몰입가든을 홈 화면에 설치하고<br>앱처럼 사용해보세요!
-    <br><button onclick="installApp()">설치하기</button>
+
+  <div class="top-label">
+    <span>MOLIP GARDEN</span>
+    <span id="clockLabel">00:00</span>
   </div>
 
-  <h1>🌸 몰입가든</h1>
-  <p class="subtitle">25분 집중이 꽃을 피웁니다</p>
+  <div class="install-banner" id="installBanner">
+    홈 화면에 설치하고 앱처럼 사용하세요.
+    <br><button onclick="installApp()">INSTALL</button>
+  </div>
+
+  <h1>몰입가든</h1>
+  <p class="subtitle">25 MIN FOCUS / 5 MIN REST</p>
 
   <div class="perm-warning" id="permWarning">
-    🔔 알림 권한이 꺼져 있어요.
-    <br><button onclick="requestNotif()">알림 허용하기</button>
+    알림 권한이 꺼져 있습니다.
+    <br><button onclick="requestNotif()">ENABLE ALERTS</button>
   </div>
 
-  <div class="mode-badge mode-focus" id="modeBadge">🍅 집중 시간</div>
+  <div class="mode-badge focus" id="modeBadge">FOCUS</div>
+
   <div class="timer-display" id="timer">25:00</div>
 
+  <div class="progress-segments" id="segments">
+    <div class="seg active"></div>
+    <div class="seg"></div>
+    <div class="seg"></div>
+    <div class="seg"></div>
+  </div>
+
   <div class="buttons">
-    <button class="btn-start" id="startBtn" onclick="start()">집중 시작</button>
-    <button class="btn-pause" id="pauseBtn" onclick="pause()" disabled>일시정지</button>
-    <button class="btn-reset" onclick="reset()">초기화</button>
+    <button class="btn-start" id="startBtn" onclick="start()">START</button>
+    <button id="pauseBtn" onclick="pause()" disabled>PAUSE</button>
+    <button onclick="reset()">RESET</button>
   </div>
 
   <div class="garden" id="garden">
-    <span style="color:#aaa; font-size:12px; align-self:center;">아직 핀 꽃이 없어요 🌱</span>
+    <span style="color:#444; font-size:11px; font-family:var(--font-mono);">NO FLOWERS YET</span>
   </div>
-  <div class="stat" id="stat">오늘 핀 꽃: 0송이</div>
+  <div class="stat" id="stat">FLOWERS: 0</div>
+
 </div>
 
 <script>
@@ -190,25 +265,29 @@ const gardenEl = document.getElementById('garden');
 const statEl = document.getElementById('stat');
 const permWarning = document.getElementById('permWarning');
 const installBanner = document.getElementById('installBanner');
+const clockLabel = document.getElementById('clockLabel');
+const segments = document.querySelectorAll('.seg');
 
-// ===== Service Worker 등록 =====
+// 상단 시계
+setInterval(() => {
+  const now = new Date();
+  clockLabel.textContent = now.toTimeString().slice(0,5);
+}, 1000);
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg => console.log('✅ SW 등록:', reg.scope))
-      .catch(err => console.error('❌ SW 실패:', err));
+    navigator.serviceWorker.register('service-worker.js').catch(console.error);
   });
 }
 
-// ===== 알림 권한 =====
 function checkNotifPermission() {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'default') {
     permWarning.style.display = 'block';
-    permWarning.innerHTML = '🔔 알림 권한이 꺼져 있어요.<br><button onclick="requestNotif()">알림 허용하기</button>';
+    permWarning.innerHTML = '알림 권한이 꺼져 있습니다.<br><button onclick="requestNotif()">ENABLE ALERTS</button>';
   } else if (Notification.permission === 'denied') {
     permWarning.style.display = 'block';
-    permWarning.innerHTML = '🔕 알림이 차단되어 있어요.<br>브라우저 설정에서 알림을 허용해주세요.';
+    permWarning.innerHTML = '알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.';
   } else {
     permWarning.style.display = 'none';
   }
@@ -218,44 +297,40 @@ async function requestNotif() {
   if (!('Notification' in window)) return;
   const permission = await Notification.requestPermission();
   checkNotifPermission();
-  if (permission === 'granted') {
-    notify('🌸 몰입가든', '알림이 활성화되었어요! 꽃이 필 때 알려드릴게요.');
-  }
+  if (permission === 'granted') notify('몰입가든', '알림이 활성화되었습니다.');
 }
 
-// Service Worker를 통한 알림 (백그라운드에서도 유지됨)
 async function notify(title, body) {
   if (Notification.permission !== 'granted') return;
-
-  // SW가 준비되면 SW로 알림
   if ('serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.ready;
       await reg.showNotification(title, {
-        body: body,
-        icon: 'icon.svg',
-        badge: 'icon.svg',
-        tag: 'molip-garden',
-        vibrate: [200, 100, 200],
-        requireInteraction: false,
+        body, icon: 'icon.svg', badge: 'icon.svg',
+        tag: 'molip-garden', vibrate: [200, 100, 200],
         data: { url: '/' }
       });
       return;
-    } catch (e) {
-      console.warn('SW 알림 실패, 기본 알림 사용:', e);
-    }
+    } catch (e) {}
   }
-
-  // 폴백: 기본 알림
   new Notification(title, { body, icon: 'icon.svg' });
 }
 
-// ===== 타이머 로직 (절대 시간 기반) =====
 function updateDisplay() {
   const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   const s = (timeLeft % 60).toString().padStart(2, '0');
   timerEl.textContent = `${m}:${s}`;
-  document.title = `${m}:${s} 🌸 몰입가든`;
+  document.title = `${m}:${s} · 몰입가든`;
+  updateSegments();
+}
+
+function updateSegments() {
+  const total = isFocus ? FOCUS_TIME : BREAK_TIME;
+  const elapsed = total - timeLeft;
+  const activeCount = Math.min(4, Math.floor((elapsed / total) * 4));
+  segments.forEach((seg, i) => {
+    seg.classList.toggle('active', i < activeCount || (elapsed === 0 && i === 0));
+  });
 }
 
 function tick() {
@@ -275,12 +350,10 @@ function tick() {
 function start() {
   if (isRunning) return;
   if (Notification.permission === 'default') requestNotif();
-
   isRunning = true;
   endTime = Date.now() + timeLeft * 1000;
   startBtn.disabled = true;
   pauseBtn.disabled = false;
-
   clearInterval(timerInterval);
   timerInterval = setInterval(tick, 250);
   tick();
@@ -300,32 +373,26 @@ function reset() {
   timeLeft = FOCUS_TIME;
   startBtn.disabled = false;
   pauseBtn.disabled = true;
+  modeBadge.textContent = 'FOCUS';
+  modeBadge.className = 'mode-badge focus';
   updateDisplay();
-  modeBadge.textContent = '🍅 집중 시간';
-  modeBadge.className = 'mode-badge mode-focus';
 }
 
 async function sessionComplete() {
   if (isFocus) {
     flowerCount++;
     addFlower();
-    await notify(
-      '🌷 꽃이 피었어요!',
-      `${flowerCount}번째 꽃이 피었습니다. 5분 휴식할 시간이에요.`
-    );
+    await notify('꽃이 피었습니다', `${flowerCount}번째 꽃. 5분 휴식하세요.`);
     isFocus = false;
     timeLeft = BREAK_TIME;
-    modeBadge.textContent = '💧 휴식 시간';
-    modeBadge.className = 'mode-badge mode-break';
+    modeBadge.textContent = 'REST';
+    modeBadge.className = 'mode-badge break';
   } else {
-    await notify(
-      '🌱 다시 집중할 시간!',
-      '휴식이 끝났어요. 새로운 꽃을 피워볼까요?'
-    );
+    await notify('다시 집중할 시간', '휴식이 끝났습니다.');
     isFocus = true;
     timeLeft = FOCUS_TIME;
-    modeBadge.textContent = '🍅 집중 시간';
-    modeBadge.className = 'mode-badge mode-focus';
+    modeBadge.textContent = 'FOCUS';
+    modeBadge.className = 'mode-badge focus';
   }
   updateDisplay();
   start();
@@ -338,11 +405,10 @@ function addFlower() {
   flower.className = 'flower';
   flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
   gardenEl.appendChild(flower);
-  statEl.textContent = `오늘 핀 꽃: ${flowerCount}송이`;
+  statEl.textContent = `FLOWERS: ${flowerCount}`;
   localStorage.setItem('flowerCount', flowerCount);
 }
 
-// ===== 설치 배너 =====
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -353,14 +419,11 @@ function installApp() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
   deferredPrompt.userChoice.then(choice => {
-    if (choice.outcome === 'accepted') {
-      installBanner.style.display = 'none';
-    }
+    if (choice.outcome === 'accepted') installBanner.style.display = 'none';
     deferredPrompt = null;
   });
 }
 
-// ===== 초기화 =====
 checkNotifPermission();
 updateDisplay();
 </script>
